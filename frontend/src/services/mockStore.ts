@@ -451,7 +451,8 @@ class MockStore {
         date: o.observation_date
       })),
       key_trends: keyTrends,
-      discussion_points: discussionPoints
+      discussion_points: discussionPoints,
+      overall_observation: `Based on the latest reports, ${person.name} exhibits some parameters that require attention. Specifically, recent findings point toward metabolic or renal considerations that should be reviewed. Overall trends indicate the need for routine monitoring.`
     };
   }
 
@@ -552,7 +553,8 @@ class MockStore {
     </body>
     </html>`;
 
-    return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    return URL.createObjectURL(blob);
   }
 }
 
