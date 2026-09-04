@@ -1,6 +1,6 @@
 import type { Person } from '../services/types';
 import { api } from '../services/api';
-import { Activity, FileText, CheckCircle2, TrendingUp, Stethoscope, User, Plus } from 'lucide-react';
+import { Activity, FileText, CheckCircle2, TrendingUp, Stethoscope, User, Plus, Trash2 } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: 'documents' | 'verification' | 'trends' | 'doctor';
@@ -9,6 +9,7 @@ interface NavbarProps {
   selectedPersonId: string;
   onSelectPerson: (id: string) => void;
   onAddPersonClick: () => void;
+  onDeletePersonClick: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -18,6 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   selectedPersonId,
   onSelectPerson,
   onAddPersonClick,
+  onDeletePersonClick,
 }) => {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -97,22 +99,32 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Family Member Switcher */}
           <div className="flex items-center space-x-2">
             {persons.length > 0 && (
-              <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                <div className="pl-2 pr-1 text-slate-500">
-                  <User className="w-4 h-4" />
+              <>
+                <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                  <div className="pl-2 pr-1 text-slate-500">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <select
+                    value={selectedPersonId}
+                    onChange={(e) => onSelectPerson(e.target.value)}
+                    className="bg-transparent border-none text-sm font-semibold text-slate-800 focus:outline-none pr-3 py-1 cursor-pointer"
+                  >
+                    {persons.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.relationship_type})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  value={selectedPersonId}
-                  onChange={(e) => onSelectPerson(e.target.value)}
-                  className="bg-transparent border-none text-sm font-semibold text-slate-800 focus:outline-none pr-3 py-1 cursor-pointer"
+                
+                <button
+                  onClick={onDeletePersonClick}
+                  title="Delete selected family member"
+                  className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-100 rounded-lg transition-colors"
                 >
-                  {persons.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.relationship_type})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
             )}
 
             <button

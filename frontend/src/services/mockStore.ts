@@ -124,6 +124,14 @@ class MockStore {
     return newPerson;
   }
 
+  public deletePerson(personId: string) {
+    this.state.persons = this.state.persons.filter(p => p.id !== personId);
+    this.state.documents = this.state.documents.filter(d => d.person_id !== personId);
+    this.state.observations = this.state.observations.filter(o => o.person_id !== personId);
+    this.saveState();
+    return { status: 'deleted', id: personId };
+  }
+
   public getDocuments(personId?: string): DocumentItem[] {
     let docs = this.state.documents;
     if (personId) {

@@ -64,6 +64,27 @@ export const App: React.FC = () => {
     setCurrentTab('verification');
   };
 
+  const handleDeletePerson = async () => {
+    if (!selectedPersonId) return;
+    const person = persons.find(p => p.id === selectedPersonId);
+    if (!person) return;
+    
+    if (window.confirm(`Are you sure you want to delete ${person.name} and all their records? This cannot be undone.`)) {
+      try {
+        await api.deletePerson(selectedPersonId);
+        const newPersons = persons.filter(p => p.id !== selectedPersonId);
+        setPersons(newPersons);
+        if (newPersons.length > 0) {
+          setSelectedPersonId(newPersons[0].id);
+        } else {
+          setSelectedPersonId('');
+        }
+      } catch (err) {
+        console.error('Failed to delete person:', err);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -92,6 +113,7 @@ export const App: React.FC = () => {
           setVerifyingDocId(null);
         }}
         onAddPersonClick={() => setIsAddPersonOpen(true)}
+        onDeletePersonClick={handleDeletePerson}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">

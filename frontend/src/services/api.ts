@@ -71,6 +71,17 @@ export const api = {
     );
   },
 
+  async deletePerson(personId: string): Promise<{ status: string; id: string }> {
+    return tryFetch(
+      async () => {
+        const res = await fetch(`${API_BASE}/persons/${personId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('API failed');
+        return res.json();
+      },
+      () => mockStore.deletePerson(personId)
+    );
+  },
+
   async getDocuments(personId?: string): Promise<DocumentItem[]> {
     return tryFetch(
       async () => {

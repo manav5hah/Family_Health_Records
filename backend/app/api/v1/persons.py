@@ -72,3 +72,21 @@ def get_person(person_id: str, db: Session = Depends(get_db)):
     if not person:
         raise HTTPException(status_code=404, detail="Person not found")
     return person
+
+@router.delete("/persons/{person_id}")
+def delete_person(person_id: str, db: Session = Depends(get_db)):
+    person = db.query(Person).filter(Person.id == person_id).first()
+    if not person:
+        raise HTTPException(status_code=404, detail="Person not found")
+    
+    from app.models.models import Document
+    from app.services.storage_service import StorageService
+
+    # Delete physical files
+    docs = db.query(Document).filter(Document.person_id == person_id).all()
+    for doc in docs:
+        StorageService.delete_document_file(doc.storage_path)
+        
+    db.delete(person)
+    db.commit()
+    return {"status": "deleted", "id": person_id}
