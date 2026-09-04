@@ -1,0 +1,31 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Node dependencies & build
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Sensitive Medical Data & Storage (CRITICAL FOR PRIVACY)
+storage/documents/
+storage/*.db
+storage/*.sqlite3
+sample_reports/*.pdf
+*.pdf
+
+# Environment variables & secrets
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
