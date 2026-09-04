@@ -5,7 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, ReferenceArea 
 } from 'recharts';
-import { TrendingUp, Table, Calendar, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
+import { TrendingUp, Table, AlertCircle, RefreshCw, Download, ExternalLink } from 'lucide-react';
 
 interface TrendsPageProps {
   currentPerson: Person | null;
@@ -18,7 +18,6 @@ export const TrendsPage: React.FC<TrendsPageProps> = ({
 }) => {
   const [trends, setTrends] = useState<ParameterTrend[]>([]);
   const [matrix, setMatrix] = useState<ComparisonMatrix | null>(null);
-  const [selectedCode, setSelectedCode] = useState<string>('hba1c');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
   const [loading, setLoading] = useState(true);
@@ -33,11 +32,6 @@ export const TrendsPage: React.FC<TrendsPageProps> = ({
       ]);
       setTrends(trendData);
       setMatrix(matrixData);
-
-      // Default selection if current selected not available
-      if (trendData.length > 0 && !trendData.some(t => t.canonical_code === selectedCode)) {
-        setSelectedCode(trendData[0].canonical_code);
-      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -57,23 +51,31 @@ export const TrendsPage: React.FC<TrendsPageProps> = ({
     );
   }
 
+  const handleExport = () => {
+    if (!matrix) return;
+    let csv = 'Biomarker,Unit,' + matrix.dates.join(',') + '\n';
+    matrix.rows.forEach(row => {
+      const rowData = [
+        `"${row.canonical_name}"`,
+        `"${row.unit}"`,
+        ...matrix.dates.map(d => `"${row.values[d]?.value || ''}"`)
+      ];
+      csv += rowData.join(',') + '\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${currentPerson?.name || 'patient'}_health_trends.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const categories = ['All', ...Array.from(new Set(trends.map(t => t.category)))];
   const filteredTrends = selectedCategory === 'All' 
     ? trends 
     : trends.filter(t => t.category === selectedCategory);
-
-  const currentTrend = trends.find(t => t.canonical_code === selectedCode) || trends[0];
-
-  const chartData = currentTrend ? currentTrend.points.map(p => ({
-    date: p.date,
-    value: p.value,
-    unit: p.unit,
-    originalName: p.original_name,
-    originalValue: p.original_value,
-    flag: p.abnormal_flag,
-    documentId: p.document_id,
-    page: p.source_page,
-  })) : [];
 
   return (
     <div className="space-y-6">
@@ -88,6 +90,13 @@ export const TrendsPage: React.FC<TrendsPageProps> = ({
 
         {/* View Toggle */}
         <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
+          <button
+            onClick={handleExport}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md transition-colors text-slate-600 hover:text-emerald-700 mr-2"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export CSV</span>
+          </button>
           <button
             onClick={() => setViewMode('chart')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md transition-colors ${
@@ -116,174 +125,136 @@ export const TrendsPage: React.FC<TrendsPageProps> = ({
           <p className="text-sm text-slate-500 mt-1">Upload reports in the Documents section to populate trend graphs.</p>
         </div>
       ) : viewMode === 'chart' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Parameter Picker Sidebar */}
-          <div className="lg:col-span-4 space-y-4">
-            {/* Category tabs */}
-            <div className="flex flex-wrap gap-1.5 bg-white p-2.5 rounded-xl border border-slate-200">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${
-                    selectedCategory === cat
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+        <div className="space-y-6">
+          {/* Category tabs */}
+          <div className="flex flex-wrap gap-1.5 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+                  selectedCategory === cat
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredTrends.map((trend) => {
+              const data = trend.points.map(p => ({
+                date: p.date,
+                value: p.value,
+                unit: p.unit,
+                originalName: p.original_name,
+                originalValue: p.original_value,
+                flag: p.abnormal_flag,
+                documentId: p.document_id,
+                page: p.source_page,
+              }));
 
-            {/* Parameter List */}
-            <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 max-h-[550px] overflow-y-auto">
-              {filteredTrends.map((t) => {
-                const isSelected = t.canonical_code === selectedCode;
-                return (
-                  <button
-                    key={t.canonical_code}
-                    onClick={() => setSelectedCode(t.canonical_code)}
-                    className={`w-full text-left p-3.5 flex items-center justify-between transition-colors ${
-                      isSelected
-                        ? 'bg-emerald-50/70 border-l-4 border-emerald-600'
-                        : 'hover:bg-slate-50'
-                    }`}
-                  >
+              return (
+                <div key={trend.canonical_code} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
                     <div>
-                      <h4 className={`text-sm font-bold ${isSelected ? 'text-emerald-900' : 'text-slate-800'}`}>
-                        {t.canonical_name}
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{t.category} • {t.points.length} record(s)</p>
+                      <h3 className="text-lg font-extrabold text-slate-900">{trend.canonical_name}</h3>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Standard Unit: <strong>{trend.unit}</strong>
+                        {trend.reference_low !== undefined && trend.reference_high !== undefined && (
+                          <span className="ml-3 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">
+                            Ref: {trend.reference_low} - {trend.reference_high} {trend.unit}
+                          </span>
+                        )}
+                      </p>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-sm font-black text-slate-900">
-                        {t.latest_value}
-                      </span>
-                      <span className="text-xs text-slate-500 ml-1">{t.unit}</span>
-                      {t.is_abnormal && (
-                        <div className="text-[10px] text-rose-600 font-bold mt-0.5">Abnormal</div>
+                      <span className="text-xl font-black text-slate-900">{trend.latest_value}</span>
+                      <span className="text-xs font-bold text-slate-500 ml-1">{trend.unit}</span>
+                      {trend.is_abnormal && (
+                        <div className="text-[10px] text-rose-600 font-bold mt-0.5">Abnormal History</div>
                       )}
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Main Chart Card */}
-          <div className="lg:col-span-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            {currentTrend ? (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
-                      {currentTrend.category}
-                    </span>
-                    <h3 className="text-xl font-extrabold text-slate-900 mt-0.5">
-                      {currentTrend.canonical_name}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Standard Unit: <strong>{currentTrend.unit}</strong>
-                      {currentTrend.reference_low !== undefined && currentTrend.reference_high !== undefined && (
-                        <span className="ml-3 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">
-                          Normal Biological Reference: {currentTrend.reference_low} - {currentTrend.reference_high} {currentTrend.unit}
-                        </span>
-                      )}
-                    </p>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-2xl font-black text-slate-900">{currentTrend.latest_value}</span>
-                    <span className="text-xs font-bold text-slate-500 ml-1">{currentTrend.unit}</span>
-                    <p className="text-xs text-slate-400 mt-0.5">Latest: {currentTrend.latest_date}</p>
-                  </div>
-                </div>
-
-                {/* Recharts Line Chart */}
-                <div className="h-72 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} />
-                      <YAxis stroke="#64748b" fontSize={12} tickLine={false} unit={` ${currentTrend.unit}`} />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-slate-900 text-white p-3 rounded-lg shadow-xl text-xs space-y-1">
-                                <p className="font-bold text-slate-200">{data.date}</p>
-                                <p className="text-emerald-400 font-extrabold text-sm">
-                                  {data.value} {data.unit}
-                                </p>
-                                <p className="text-slate-400">Reported: {data.originalName} ({data.originalValue})</p>
-                                {data.flag && (
-                                  <p className="text-rose-400 font-bold">Flag: {data.flag}</p>
-                                )}
-                                <p className="text-slate-400 text-[10px]">Click to view source page {data.page}</p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-
-                      {/* Normal Reference Band */}
-                      {currentTrend.reference_low !== undefined && currentTrend.reference_high !== undefined && (
-                        <ReferenceArea
-                          y1={currentTrend.reference_low}
-                          y2={currentTrend.reference_high}
-                          fill="#10b981"
-                          fillOpacity={0.08}
-                          stroke="#10b981"
-                          strokeOpacity={0.2}
+                  <div className="h-64 w-full pt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
+                        <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const d = payload[0].payload;
+                              return (
+                                <div className="bg-slate-900 text-white p-3 rounded-lg shadow-xl text-xs space-y-1">
+                                  <p className="font-bold text-slate-200">{d.date}</p>
+                                  <p className="text-emerald-400 font-extrabold text-sm">
+                                    {d.value} {d.unit}
+                                  </p>
+                                  {d.flag && <p className="text-rose-400 font-bold">Flag: {d.flag}</p>}
+                                  <p className="text-slate-400 text-[10px]">Click point to view source page {d.page}</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
                         />
-                      )}
 
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#059669"
-                        strokeWidth={3}
-                        dot={{ r: 5, fill: '#059669', strokeWidth: 2, stroke: '#fff' }}
-                        activeDot={{ r: 8, fill: '#047857' }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                        {trend.reference_low !== undefined && trend.reference_high !== undefined && (
+                          <ReferenceArea
+                            y1={trend.reference_low}
+                            y2={trend.reference_high}
+                            fill="#10b981"
+                            fillOpacity={0.08}
+                            stroke="#10b981"
+                            strokeOpacity={0.2}
+                          />
+                        )}
 
-                {/* Click-through Record Citations */}
-                <div className="pt-4 border-t border-slate-100">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Source Provenance Points ({chartData.length})
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {chartData.map((cd, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => onOpenDocumentVerification(cd.documentId)}
-                        className="p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs flex items-center justify-between cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="font-semibold text-slate-800">{cd.date}:</span>
-                          <span className="font-black text-slate-900">{cd.value} {cd.unit}</span>
-                          {cd.flag && (
-                            <span className="text-[10px] font-bold text-rose-600">[{cd.flag}]</span>
-                          )}
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke="#059669"
+                          strokeWidth={2}
+                          dot={{ r: 4, fill: '#059669', strokeWidth: 2, stroke: '#fff' }}
+                          activeDot={{ r: 6, fill: '#047857', onClick: (_: any, payload: any) => onOpenDocumentVerification(payload.payload.documentId) }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  
+                  {/* Click-through Record Citations for the trend */}
+                  <div className="pt-4 border-t border-slate-100 mt-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                      Recent Records
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {data.slice(-2).map((cd, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => onOpenDocumentVerification(cd.documentId)}
+                          className="p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-slate-800">{cd.date}</span>
+                            <span className="font-black text-slate-900">{cd.value}</span>
+                          </div>
+                          <div className="flex items-center text-emerald-600 space-x-1">
+                            <span>Pg {cd.page}</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </div>
                         </div>
-                        <div className="flex items-center text-emerald-600 space-x-1 font-medium">
-                          <span>Page {cd.page}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : null}
+              );
+            })}
           </div>
         </div>
       ) : (

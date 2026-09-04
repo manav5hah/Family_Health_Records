@@ -16,9 +16,8 @@ else
     source .venv/bin/activate
 fi
 
-# Ensure database is seeded with sample report
-export PYTHONPATH="backend"
-python3 backend/app/seed.py
 
+
+export PYTHONPATH="backend"
 echo "Starting server on http://localhost:8000 ..."
 python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

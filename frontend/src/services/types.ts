@@ -137,4 +137,5 @@ export interface DoctorVisitSummary {
   }[];
   key_trends: ParameterTrend[];
   discussion_points: DiscussionPoint[];
+  overall_observation?: string;
 }

@@ -16,9 +16,14 @@ __pycache__/
 .pytest_cache/
 
 # Sensitive Medical Data & Storage (CRITICAL FOR PRIVACY)
-storage/documents/
-storage/*.db
-storage/*.sqlite3
+storage/*
+!storage/.gitkeep
+!storage/documents/
+storage/documents/*
+!storage/documents/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
 sample_reports/*.pdf
 *.pdf
 

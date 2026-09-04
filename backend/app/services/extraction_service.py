@@ -237,3 +237,88 @@ Document Text:
             print(f"LLM Extraction failed: {e}")
 
         return []
+
+    @classmethod
+    async def extract_with_vision_llm(cls, file_path: str, doc_date: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        OCR fallback using Gemini Vision for scanned PDFs.
+        """
+        api_key = settings.GEMINI_API_KEY
+        if not api_key:
+            return []
+
+        import fitz
+        import base64
+
+        doc = fitz.open(file_path)
+        observations = []
+
+        prompt = f"""
+Extract all medical laboratory test results, observations, and vital signs from the following document image.
+Return ONLY a valid JSON array of objects with the schema:
+[
+  {{
+    "original_test_name": "string (as reported)",
+    "value_text": "string",
+    "value_numeric": number or null,
+    "original_unit": "string or null",
+    "reference_low": number or null,
+    "reference_high": number or null,
+    "reference_text": "string or null",
+    "abnormal_flag": "H or L or null",
+    "method": "string or null",
+    "confidence": number between 0.0 and 1.0,
+    "source_snippet": "exact snippet quoted from text"
+  }}
+]
+"""
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+                for page_num in range(len(doc)):
+                    page = doc[page_num]
+                    pix = page.get_pixmap()
+                    img_bytes = pix.tobytes("jpeg")
+                    img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+
+                    resp = await client.post(url, json={
+                        "contents": [{
+                            "parts": [
+                                {"text": prompt},
+                                {
+                                    "inline_data": {
+                                        "mime_type": "image/jpeg",
+                                        "data": img_b64
+                                    }
+                                }
+                            ]
+                        }],
+                        "generationConfig": {"responseMimeType": "application/json"}
+                    })
+
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        raw_json = data["candidates"][0]["content"]["parts"][0]["text"]
+                        items = json.loads(raw_json)
+                        for item in items:
+                            canon_code, canon_name, std_unit = MedicalNormalizer.match_canonical(item.get("original_test_name", ""))
+                            norm_val, norm_unit = MedicalNormalizer.normalize_unit_and_value(
+                                item.get("value_numeric"), item.get("original_unit"), canon_code
+                            )
+                            item["canonical_test_code"] = canon_code
+                            item["canonical_test_name"] = canon_name or item.get("original_test_name")
+                            item["normalized_value"] = norm_val
+                            item["normalized_unit"] = norm_unit
+                            item["source_page"] = page_num + 1
+                            item["observation_date"] = doc_date
+                            item["extraction_method"] = "llm_vision"
+                            item["verification_status"] = "needs_review"
+                            observations.append(item)
+                    else:
+                        print(f"Vision LLM error: {resp.text}")
+        except Exception as e:
+            print(f"Vision LLM Extraction failed: {e}")
+        finally:
+            doc.close()
+
+        return observations

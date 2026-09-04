@@ -43,6 +43,14 @@ A privacy-focused, family-centric health record system that preserves original m
 ```
 Open your browser at **`http://localhost:8000`**.
 
+### (Optional) Seed Sample Data
+To populate the database with sample health reports:
+```bash
+source .venv/bin/activate
+export PYTHONPATH="backend"
+python3 backend/app/seed.py
+```
+
 ### 2. Running Backend & Frontend in Development Mode
 
 **Backend**:

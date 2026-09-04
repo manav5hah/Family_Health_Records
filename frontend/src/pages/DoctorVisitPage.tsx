@@ -110,6 +110,18 @@ export const DoctorVisitPage: React.FC<DoctorVisitPageProps> = ({ currentPerson 
           </div>
         </div>
 
+        {/* Section 0: Overall Observation */}
+        {summary.overall_observation && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+              Overall Health Trend Observation
+            </h3>
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-sm leading-relaxed">
+              {summary.overall_observation}
+            </div>
+          </div>
+        )}
+
         {/* Section 1: Questions & Discussion Points for Doctor */}
         <div className="space-y-3">
           <div className="flex items-center space-x-2">

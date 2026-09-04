@@ -6,6 +6,7 @@ import { DocumentsPage } from './pages/DocumentsPage';
 import { VerificationPage } from './pages/VerificationPage';
 import { TrendsPage } from './pages/TrendsPage';
 import { DoctorVisitPage } from './pages/DoctorVisitPage';
+import { WelcomePage } from './pages/WelcomePage';
 import { AddPersonModal } from './components/AddPersonModal';
 import { RefreshCw } from 'lucide-react';
 
@@ -94,45 +95,51 @@ export const App: React.FC = () => {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {currentTab === 'documents' && (
-          <DocumentsPage
-            documents={documents}
-            currentPerson={currentPerson}
-            onRefreshDocuments={loadDocuments}
-            onOpenVerification={handleOpenVerification}
-            onNavigateToTrends={() => setCurrentTab('trends')}
-          />
-        )}
+        {persons.length === 0 ? (
+          <WelcomePage onAddPersonClick={() => setIsAddPersonOpen(true)} />
+        ) : (
+          <>
+            {currentTab === 'documents' && (
+              <DocumentsPage
+                documents={documents}
+                currentPerson={currentPerson}
+                onRefreshDocuments={loadDocuments}
+                onOpenVerification={handleOpenVerification}
+                onNavigateToTrends={() => setCurrentTab('trends')}
+              />
+            )}
 
-        {currentTab === 'verification' && (
-          verifyingDocId ? (
-            <VerificationPage
-              documentId={verifyingDocId}
-              onBack={() => setCurrentTab('documents')}
-              onDocumentUpdated={loadDocuments}
-            />
-          ) : (
-            <div className="bg-white p-12 rounded-xl border border-slate-200 text-center">
-              <p className="text-slate-600">No document selected for verification.</p>
-              <button
-                onClick={() => setCurrentTab('documents')}
-                className="mt-3 text-sm text-emerald-600 font-bold"
-              >
-                Go to Documents
-              </button>
-            </div>
-          )
-        )}
+            {currentTab === 'verification' && (
+              verifyingDocId ? (
+                <VerificationPage
+                  documentId={verifyingDocId}
+                  onBack={() => setCurrentTab('documents')}
+                  onDocumentUpdated={loadDocuments}
+                />
+              ) : (
+                <div className="bg-white p-12 rounded-xl border border-slate-200 text-center">
+                  <p className="text-slate-600">No document selected for verification.</p>
+                  <button
+                    onClick={() => setCurrentTab('documents')}
+                    className="mt-3 text-sm text-emerald-600 font-bold"
+                  >
+                    Go to Documents
+                  </button>
+                </div>
+              )
+            )}
 
-        {currentTab === 'trends' && (
-          <TrendsPage
-            currentPerson={currentPerson}
-            onOpenDocumentVerification={handleOpenVerification}
-          />
-        )}
+            {currentTab === 'trends' && (
+              <TrendsPage
+                currentPerson={currentPerson}
+                onOpenDocumentVerification={handleOpenVerification}
+              />
+            )}
 
-        {currentTab === 'doctor' && (
-          <DoctorVisitPage currentPerson={currentPerson} />
+            {currentTab === 'doctor' && (
+              <DoctorVisitPage currentPerson={currentPerson} />
+            )}
+          </>
         )}
       </main>
 

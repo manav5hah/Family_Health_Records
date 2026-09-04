@@ -141,6 +141,18 @@ async def upload_document(
         pages_data=pdf_info.get("pages", []),
         doc_date=doc.document_date
     )
+    
+    if not extracted_obs:
+        extracted_obs = await ExtractionService.extract_with_vision_llm(
+            file_path=storage_path,
+            doc_date=doc.document_date
+        )
+    
+    if not extracted_obs:
+        extracted_obs = await ExtractionService.extract_with_vision_llm(
+            file_path=storage_path,
+            doc_date=doc.document_date
+        )
 
     saved_observations = []
     for item in extracted_obs:
@@ -207,7 +219,7 @@ async def upload_document(
     }
 
 @router.post("/documents/ingest-sample")
-def ingest_sample_file(db: Session = Depends(get_db)):
+async def ingest_sample_file(db: Session = Depends(get_db)):
     """
     Convenience endpoint to ingest the sample PDF in the workspace.
     """
@@ -265,6 +277,12 @@ def ingest_sample_file(db: Session = Depends(get_db)):
         pages_data=pdf_info.get("pages", []),
         doc_date=doc.document_date
     )
+    
+    if not extracted_obs:
+        extracted_obs = await ExtractionService.extract_with_vision_llm(
+            file_path=storage_path,
+            doc_date=doc.document_date
+        )
 
     saved_observations = []
     for item in extracted_obs:

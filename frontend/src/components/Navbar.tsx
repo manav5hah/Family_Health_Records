@@ -42,74 +42,78 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Nav Tabs */}
-          <nav className="hidden md:flex space-x-1">
-            <button
-              onClick={() => onSelectTab('documents')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                currentTab === 'documents'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>Documents</span>
-            </button>
+          {persons.length > 0 && (
+            <nav className="hidden md:flex space-x-1">
+              <button
+                onClick={() => onSelectTab('documents')}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentTab === 'documents'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>Documents</span>
+              </button>
 
-            <button
-              onClick={() => onSelectTab('verification')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                currentTab === 'verification'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Verification (HITL)</span>
-            </button>
+              <button
+                onClick={() => onSelectTab('verification')}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentTab === 'verification'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Verification (HITL)</span>
+              </button>
 
-            <button
-              onClick={() => onSelectTab('trends')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                currentTab === 'trends'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span>Longitudinal Trends</span>
-            </button>
+              <button
+                onClick={() => onSelectTab('trends')}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentTab === 'trends'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Longitudinal Trends</span>
+              </button>
 
-            <button
-              onClick={() => onSelectTab('doctor')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                currentTab === 'doctor'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <Stethoscope className="w-4 h-4" />
-              <span>Doctor Visit Mode</span>
-            </button>
-          </nav>
+              <button
+                onClick={() => onSelectTab('doctor')}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentTab === 'doctor'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <Stethoscope className="w-4 h-4" />
+                <span>Doctor Visit Mode</span>
+              </button>
+            </nav>
+          )}
 
           {/* Family Member Switcher */}
           <div className="flex items-center space-x-2">
-            <div className="flex items-center bg-slate-100 rounded-lg p-1">
-              <div className="pl-2 pr-1 text-slate-500">
-                <User className="w-4 h-4" />
+            {persons.length > 0 && (
+              <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                <div className="pl-2 pr-1 text-slate-500">
+                  <User className="w-4 h-4" />
+                </div>
+                <select
+                  value={selectedPersonId}
+                  onChange={(e) => onSelectPerson(e.target.value)}
+                  className="bg-transparent border-none text-sm font-semibold text-slate-800 focus:outline-none pr-3 py-1 cursor-pointer"
+                >
+                  {persons.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.relationship_type})
+                    </option>
+                  ))}
+                </select>
               </div>
-              <select
-                value={selectedPersonId}
-                onChange={(e) => onSelectPerson(e.target.value)}
-                className="bg-transparent border-none text-sm font-semibold text-slate-800 focus:outline-none pr-3 py-1 cursor-pointer"
-              >
-                {persons.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.relationship_type})
-                  </option>
-                ))}
-              </select>
-            </div>
+            )}
 
             <button
               onClick={onAddPersonClick}
