@@ -1,5 +1,5 @@
-import React from 'react';
 import type { Person } from '../services/types';
+import { api } from '../services/api';
 import { Activity, FileText, CheckCircle2, TrendingUp, Stethoscope, User, Plus } from 'lucide-react';
 
 interface NavbarProps {
@@ -29,7 +29,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-900 leading-tight">Family Health Records</h1>
+              <div className="flex items-center space-x-2">
+                <h1 className="text-lg font-bold text-slate-900 leading-tight">Family Health Records</h1>
+                {api.isStandaloneMode() && (
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                    GitHub Pages Demo
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-500 font-medium">Longitudinal Analysis & Verification</p>
             </div>
           </div>
